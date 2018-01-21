@@ -1,4 +1,3 @@
 node_modules/
 config/mailConfig.js
-config/config.js
 npm-debug.log*
