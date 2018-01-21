@@ -1,14 +1,11 @@
-const Mail = require('./mailConfig');
-
 'use strict'
 
+const Mail = require('./config/mailConfig');
 const nodemailer = require('nodemailer');
-
 const transporter = nodemailer.createTransport(Mail);
-
 const mailOptions = {
     from: `loving official<${Mail.auth.user}`,
-    to: 'jessty@foxmial.com',
+    to: 'jessty@foxmail.com',
     subject: '公司',
     html: 'testing'
 };
