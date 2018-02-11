@@ -1,18 +1,56 @@
 'use strict'
 
-const Mail = require('./config/mailConfig');
-const nodemailer = require('nodemailer');
-const transporter = nodemailer.createTransport(Mail);
-const mailOptions = {
-    from: `loving official<${Mail.auth.user}`,
-    to: 'jessty@foxmail.com',
-    subject: '公司',
-    html: 'testing'
-};
+const Koa = require('koa')
+const path = require('path')
+const bodyparser = require('koa-bodyparser')
+const session = require('koa-session')
+const MysqlStore = require('koa-mysql-session')
+const router = require('koa-router')
+const staticCache = require('koa-static-cache')
+const config = require('./config/default')
+const route = require('./routers/route')
 
-transporter.sendMail(mailOptions, (error, info) => {
-    if(error) {
-        return console.log(error);
-    }
-    console.log('Message sent: %s', info.messageId);
-})
+const app = new Koa()
+
+let dbConfig = config.database
+
+const sessionMysqlConfig = {
+  user: dbConfig.user,
+  password: dbConfig.password,
+  database: dbConfig.database,
+  host: dbConfig.host
+}
+
+app.use(session({
+  key: 'USER_SID',
+  httpOnly: false,
+  renew: true
+  // store: new MysqlStore(sessionMysqlConfig)
+}, app))
+
+app.use(staticCache(
+  path.join(__dirname, './public'),
+  {
+    dynamic: true
+  },
+  {
+    maxAge: 365*24*60*60
+  }
+))
+app.use(staticCache(
+  path.join(__dirname, './public/images'),
+  {
+    dynamic: true
+  },
+  {
+    maxAge: 365*24*60*60
+  }
+))
+
+app.use(bodyparser())
+
+route(app)
+
+app.listen(config.port)
+
+console.log(`listening on port ${config.port}`)
