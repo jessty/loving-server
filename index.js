@@ -13,36 +13,36 @@ const app = new Koa()
 let dbConfig = config.database
 
 const sessionMysqlConfig = {
-    user: dbConfig.user,
-    password: dbConfig.password,
-    database: dbConfig.database,
-    host: dbConfig.host
+  user: dbConfig.user,
+  password: dbConfig.password,
+  database: dbConfig.database,
+  host: dbConfig.host
 }
 
 app.use(session({
-    key: 'USER_SID',
-    httpOnly: false,
-    renew: true
-    // store: new MysqlStore(sessionMysqlConfig)
+  key: 'USER_SID',
+  httpOnly: false,
+  renew: true
+  // store: new MysqlStore(sessionMysqlConfig)
 }, app))
 
 app.use(staticCache(
-    path.join(__dirname, './public'),
-    {
-        dynamic: true
-    },
-    {
-        maxAge: 365*24*60*60
-    }
+  path.join(__dirname, './public'),
+  {
+    dynamic: true
+  },
+  {
+    maxAge: 365*24*60*60
+  }
 ))
 app.use(staticCache(
-    path.join(__dirname, './public/images'),
-    {
-        dynamic: true
-    },
-    {
-        maxAge: 365*24*60*60
-    }
+  path.join(__dirname, './public/images'),
+  {
+    dynamic: true
+  },
+  {
+    maxAge: 365*24*60*60
+  }
 ))
 
 app.use(bodyparser())
