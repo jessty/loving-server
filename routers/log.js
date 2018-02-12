@@ -82,6 +82,15 @@ async function signup(ctx, next) {
 
 async function login(ctx, next) {
   let loginData = {...ctx.request.body}
+
+  if(!ctx.session.isNew || ctx.session.psw) {
+    ctx.body = {
+      code: 2,
+      msg: '已登录'
+    }
+    return
+  }
+
   let result = await userModel.findUserByPE(loginData.user)
 
   if(!result.length) {
@@ -90,15 +99,15 @@ async function login(ctx, next) {
       msg: '账户未注册'
     }
   } else {
-
+    
     let valid = result[0].psw === md5(loginData.psw + result[0].salt)
 
     if(valid) {
       ctx.body = {
-        code: 2,
+        code: 3,
         msg: '登录成功'
       }
-      // Object.assign(ctx.session, result[0]);
+      Object.assign(ctx.session, result[0]);
       // router.redirect('/signup');
     } else {
       ctx.status = 400

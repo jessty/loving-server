@@ -11,10 +11,11 @@ const config = require('./config/default')
 const route = require('./routers/route')
 const {initDB} = require('./lib/mysql')
 
-const app = new Koa()
-
 // 初始化数据库
 initDB()
+
+const app = new Koa()
+app.keys = ['forever','loving'];
 
 let db = config.database
 const sessionMysqlConfig = {
