@@ -1,7 +1,7 @@
-const signup = require('./signup')
+const log = require('./log')
 
 const route = function (app) {
-  app.use(signup.routes())
+  app.use(log.routes())
 
   app.use(async function(ctx, next) {
     try {

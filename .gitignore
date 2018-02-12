@@ -1,5 +1,6 @@
 node_modules/
 config/mailConfig.js
+config/dbConfig.js
 npm-debug.log*
 .vscode/
 package-lock.json

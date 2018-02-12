@@ -1,11 +1,12 @@
+const db = require('./dbConfig')
 const config = {
   port: 3000,
   database: {
-    database: 'loving',
-    user: 'root',
-    password: '123456',
-    port: '3306',
-    host: 'localhost'
+    host: db.host,
+    port: db.port,
+    database: db.database,
+    user: db.user,
+    password: db.password
   }
 }
 

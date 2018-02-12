@@ -9,22 +9,26 @@ const router = require('koa-router')
 const staticCache = require('koa-static-cache')
 const config = require('./config/default')
 const route = require('./routers/route')
+const {initDB} = require('./lib/mysql')
 
 const app = new Koa()
 
-let dbConfig = config.database
+// 初始化数据库
+initDB()
 
+let db = config.database
 const sessionMysqlConfig = {
-  user: dbConfig.user,
-  password: dbConfig.password,
-  database: dbConfig.database,
-  host: dbConfig.host
+  host: db.host,
+  port: db.port,
+  database: db.database,
+  user: db.user,
+  password: db.password
 }
 
 app.use(session({
-  key: 'USER_SID',
-  httpOnly: false,
-  renew: true
+  // key: 'USER_SID',
+  // httpOnly: false,
+  // renew: true
   // store: new MysqlStore(sessionMysqlConfig)
 }, app))
 
