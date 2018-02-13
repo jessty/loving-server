@@ -10,12 +10,14 @@ const staticCache = require('koa-static-cache')
 const config = require('./config/default')
 const route = require('./routers/route')
 const {initDB} = require('./lib/mysql')
+const errorHandle = require('./middlewares/error')
 
 // 初始化数据库
 initDB()
 
 const app = new Koa()
-app.keys = ['forever','loving'];
+app.keys = ['forever','loving']
+errorHandle(app)
 
 let db = config.database
 const sessionMysqlConfig = {
@@ -27,9 +29,9 @@ const sessionMysqlConfig = {
 }
 
 app.use(session({
-  // key: 'USER_SID',
-  // httpOnly: false,
-  // renew: true
+  maxAge: 1*60*60*1000,
+  httpOnly: false,
+  renew: true
   // store: new MysqlStore(sessionMysqlConfig)
 }, app))
 

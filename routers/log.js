@@ -1,7 +1,7 @@
 const Router = require('koa-router')
 const userModel = require('../lib/userModel')
 const md5 = require('md5')
-const {checkLogin} = require('../middlewares/check')
+const {checkLogin} = require('../util/check')
 const RandomStr = require('../util/randomStr')
 const router = new Router()
 
@@ -17,76 +17,55 @@ function judgeUserType(ctx, next) {
   } else if(phoneReg.test(user)) {
     body.phone = user
   } else {
-    ctx.status = 400
-    ctx.body = { msg: '账号格式错误' }
-    return
+    ctx.throw(400, '账号格式错误', {code:3})
+    // return
   }
 
   next();
 }
-
+// 400下：code的含义1--用户已存在  2--密码不一致  3--账号格式错误
 async function signup(ctx, next) {
 
   let signupInform = {
     ...ctx.request.body
   }
-  let newRow = {};
 
   let result = await userModel.findUserByPE(signupInform.user)
   console.log(result.length)
 
   if(result.length) {
-
-    ctx.body = {
-      code: 1,
-      msg: '用户已存在'
-    }
-
-  } else if (signupInform.psw !== signupInform.confirmPsw || signupInform.psw === '') {
-
-    ctx.body = {
-      code: 2,
-      msg: '密码不一致'
-    }
-
-  } else {
-    // 生成随机字符串，盐
-    let salt = RandomStr(8)
-    Object.assign(newRow,{
-      email: signupInform.email,
-      phone: signupInform.phone,
-      psw: md5(signupInform.psw + salt),
-      signup_time: new Date(),
-      salt
-    })
-
+    ctx.throw(400, '用户已存在', {code:1})
+  } 
+  if (signupInform.psw !== signupInform.confirmPsw || signupInform.psw === '') {
+    ctx.throw(400, '密码不一致', {code:2})
   }
 
-  try {
+  // 生成随机字符串，盐
+  let salt = RandomStr(8)
+  let newRow = {
+    email: signupInform.email,
+    phone: signupInform.phone,
+    psw: md5(signupInform.psw + salt),
+    signup_time: new Date(),
+    salt
+  }
 
-    await userModel.signup(newRow)
-    console.log('注册成功')
-    ctx.body = {
-      code: 3,
-      msg: '注册成功'
-    }
-
-  } catch (err) {
-
-    console.error('insert new user error : ', err)
-    ctx.status = 500
-    ctx.body = { msg: '注册失败' }
-
+  await userModel.signup(newRow)
+  console.log('注册成功')
+  ctx.body = {
+    msg: '注册成功'
   }
 }
 
+// login200下：code的含义：1--登录成功  2--已登录 
+// login400下：code的含义：1--账户未注册  2--密码错误
 async function login(ctx, next) {
   let loginData = {...ctx.request.body}
 
-  if(!ctx.session.isNew || ctx.session.psw) {
+  if(!ctx.session.isNew || ctx.session.iduser) {
     ctx.body = {
       code: 2,
-      msg: '已登录'
+      msg: '已登录',
     }
     return
   }
@@ -94,42 +73,40 @@ async function login(ctx, next) {
   let result = await userModel.findUserByPE(loginData.user)
 
   if(!result.length) {
-    ctx.body = {
-      code: 1,
-      msg: '账户未注册'
-    }
-  } else {
-    
-    let valid = result[0].psw === md5(loginData.psw + result[0].salt)
-
-    if(valid) {
-      ctx.body = {
-        code: 3,
-        msg: '登录成功'
-      }
-      Object.assign(ctx.session, result[0]);
-      // router.redirect('/signup');
-    } else {
-      ctx.status = 400
-      ctx.body = {
-        code: 1,
-        msg: '密码错误'
-      }
-    }
+    ctx.throw(400, '账户未注册', {code:1})
   }
 
-  await next()
+  let invalid = result[0].psw !== md5(loginData.psw + result[0].salt)
+
+  invalid ? ctx.throw(400, '密码错误', {code:2}) : null
+
+  await userModel.login(result[0].iduser)
+
+  ctx.body = {
+    code: 1,
+    msg: '登录成功'
+  }
+  delete result[0].psw
+  Object.assign(ctx.session, result[0]);
+
+  next()
+}
+
+function logout(ctx, next) {
+  ctx.session = null
+  ctx.body = {
+    msg: '退出成功'
+  }
+  next()
 }
 
 router.get('/signup', (ctx, next) => {
-  // await checkLogin(ctx)
   ctx.body = {
-    code:1,
     msg: 'test'
   }
 })
 
 router.post('/signup', judgeUserType, signup)
 router.post('/login', login)
-
+router.post('/logout', logout)
 module.exports = router
