@@ -29,9 +29,9 @@ const sessionMysqlConfig = {
 }
 
 app.use(session({
-  maxAge: 1*60*60*1000,
-  httpOnly: false,
-  renew: true
+  // maxAge: 1*60*60*1000,
+  // httpOnly: false,
+  // renew: true
   // store: new MysqlStore(sessionMysqlConfig)
 }, app))
 

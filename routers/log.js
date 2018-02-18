@@ -31,7 +31,6 @@ async function signup(ctx, next) {
   }
 
   let result = await userModel.findUserByPE(signupInform.user)
-  console.log(result.length)
 
   if(result.length) {
     ctx.throw(400, '用户已存在', {code:1})
@@ -41,17 +40,20 @@ async function signup(ctx, next) {
   }
 
   // 生成随机字符串，盐
-  let salt = RandomStr(8)
+  let salt = RandomStr(8), img_dir = RandomStr(8, false);
   let newRow = {
     email: signupInform.email,
     phone: signupInform.phone,
     psw: md5(signupInform.psw + salt),
     signup_time: new Date(),
-    salt
+    salt,
+    img_dir
   }
 
   await userModel.signup(newRow)
   console.log('注册成功')
+  console.error('返回404？？')
+  ctx.status = 200
   ctx.body = {
     msg: '注册成功'
   }
@@ -86,8 +88,8 @@ async function login(ctx, next) {
     code: 1,
     msg: '登录成功'
   }
-  delete result[0].psw
-  Object.assign(ctx.session, result[0]);
+  ctx.session.iduser = result[0].iduser
+  // Object.assign(ctx.session, {iduser: result[0].iduser});
 
   next()
 }
