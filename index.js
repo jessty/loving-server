@@ -7,6 +7,7 @@ const session = require('koa-session')
 const MysqlStore = require('koa-mysql-session')
 const router = require('koa-router')
 const staticCache = require('koa-static-cache')
+const cors = require('koa2-cors')
 const config = require('./config/default')
 const route = require('./routers/route')
 const {initDB} = require('./lib/mysql')
@@ -16,8 +17,12 @@ const errorHandle = require('./middlewares/error')
 initDB()
 
 const app = new Koa()
+
+app.use(cors())
+// errorHandle(app)
+app.use(errorHandle())
+
 app.keys = ['forever','loving']
-errorHandle(app)
 
 let db = config.database
 const sessionMysqlConfig = {
@@ -29,8 +34,10 @@ const sessionMysqlConfig = {
 }
 
 app.use(session({
-  // maxAge: 1*60*60*1000,
-  // httpOnly: false,
+  maxAge: 1*60*60*1000,
+  httpOnly: false,
+  path: '/',
+  domain: 'http://localhost:3000/'
   // renew: true
   // store: new MysqlStore(sessionMysqlConfig)
 }, app))
