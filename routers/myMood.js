@@ -49,7 +49,7 @@ async function idenIDCard(ctx, next) {
       } else {
         let err = new Error('参数错误')
         err.status = 400
-        cb(err,'')
+        throw err
       }
 
     },
@@ -57,8 +57,7 @@ async function idenIDCard(ctx, next) {
       fileSize: 10000
     },
     fields: [
-      { name: 'front',maxCount:1},
-      { name: 'back',maxCount:1},
+      { name: 'img',maxCount:5},
     ]
   } 
 
@@ -100,14 +99,15 @@ async function getIdenIDCard(ctx, next) {
     }
   }
 }
-function email(){
+function abc(){
 
 }
 
-function phone(){
+async function getMyMood(ctx, next){
 
 }
 
-router.post('/identify', idenIDCard, afterIdenIDCard)
-router.get('/identify', getIdenIDCard)
+router.post('/myMood', idenIDCard, afterIdenIDCard)
+router.get('/myMood', getMyMood)
+
 module.exports = router

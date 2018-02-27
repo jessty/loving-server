@@ -36,8 +36,8 @@ const sessionMysqlConfig = {
 app.use(session({
   maxAge: 1*60*60*1000,
   httpOnly: false,
-  path: '/',
-  domain: 'http://localhost:3000/'
+  // path: '/',
+  // domain: 'http://localhost:3000/'
   // renew: true
   // store: new MysqlStore(sessionMysqlConfig)
 }, app))

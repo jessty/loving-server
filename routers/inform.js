@@ -19,6 +19,7 @@ async function getInform(ctx, next) {
     }
   }
 }
+
 async function modifyInform(ctx, next) {
   let body = ctx.request.body
   let idUser = body.idUser
@@ -30,6 +31,7 @@ async function modifyInform(ctx, next) {
   }
   await next()
 }
+
 async function addInform(ctx, next) {
   await informModel.addInform(ctx.params.table, ctx.request.body)
 }
@@ -47,8 +49,8 @@ async function checkAccess(ctx, next) {
     return
   }
 }
+
 router.get('/inform/:table', getInform)
-// router.post('/inform/:table',checkAccess, addInform)
-router.put('/inform/:table',checkAccess, modifyInform)
+router.post('/inform/:table',checkAccess, modifyInform)
 
 module.exports = router
