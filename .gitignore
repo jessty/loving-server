@@ -2,6 +2,7 @@ node_modules/
 config/mailConfig.js
 config/dbConfig.js
 imgs/iimgs/
+imgs/user/*/
 npm-debug.log*
 .vscode/
 package-lock.json
