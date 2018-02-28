@@ -1,9 +1,9 @@
 const router = require('koa-router')()
-const Upload = require('../util/upload')
-const {checkLogin} = require('../util/check')
-const RandomStr = require('../util/randomStr')
 const path = require('path')
 const fs = require('fs')
+const SaveFile = require('../util/saveFile')
+const {checkLogin} = require('../util/check')
+const RandomStr = require('../util/randomStr')
 const userModel = require('../lib/userModel')
 const imgsModel = require('../lib/imgsModel')
 const albumMdl = require('../lib/albumModel')
@@ -22,58 +22,30 @@ async function create(ctx, next){
   }
 
 }
-function saveImgs(ctx, cover=false) {
-  let dir = ''
-  let uploadOpt = {
-    destination:(req, file, cb) => {
-      dir = path.resolve(__dirname, `../imgs/user/${ctx.session.imgDir}`)
 
-      fs.access(dir, (err) => {
-        if(err) {
-          fs.mkdir(dir, (err) => {
-            if(err) {
-              throw err
-            } else {
-              cb(null, dir)
-            }
-          })
-        } else {
-          cb(null, dir)
-        }
-      })
-    },
-    filename:(req, file, cb) => {
-      let dotIndex = file.originalname.lastIndexOf('.')
-      let ext = file.originalname.substr(dotIndex)
-      let filename = RandomStr(8, false)
-      let p = path.resolve(dir,`${filename}${ext}`)
-      // let p = path.resolve(dir,'BhjqwljO.jpg')
-      fs.access(p, (err) => {
-
-        if(cover || err) {
-          cb(null, `${filename}${ext}`)
-          // cb(null, 'BhjqwljO.jpg')
-        } else {
-          ctx.throw(500, '无法保存图片，可能用户图片总数过多')
-        }
-      })
-    },
+async function addImg(ctx, next){
+  let saveOpt = {
+    fields: [
+      {
+        name: 'imgs',
+        maxCount:5
+      }
+    ],
     limits: {
       fileSize: 1000000
     },
-    fields: [
-      { name: 'imgs',maxCount:5},
-    ]
+    dir: path.join(__dirname, '../imgs/user', ctx.session.imgDir)
   }
 
-  return Upload(uploadOpt)
-}
-async function addImg(ctx, next){
-
-  await saveImgs(ctx)(ctx, async ()=> {
+  await SaveFile(saveOpt)(ctx, async ()=> {
     let {imgs} = ctx.req.files
     let {idAlbum} = ctx.req.body
     console.error('没做图片个数限制')
+    let {length} = await albumMdl.getAlbumById(idAlbum)
+    if(length === 0) {
+      ctx.throw(400, '相册不存在')
+    }
+
     let idImgs = []
     for(let img of imgs) {
       let {insertId} = await imgsModel.addImg({
@@ -95,38 +67,22 @@ async function addImg(ctx, next){
 
 }
 
-async function afterAddImg(ctx, next) {
-  // let {imgs} = ctx.req.files
-  //   let {idAlbum} = ctx.req.body
-  //   console.error('没做图片个数限制')
-  //   let imgs = []
-  //   for(let img of imgs) {
-  //     let {insertId} = await imgsModel.addImg({
-  //       idBelong: idAlbum,
-  //       imgUrl: img.filename,
-  //       type: 1
-  //     })
-  //     imgs.push(insertId)
-  //   }
-  //   imgs = imgs.map((img) => {
-  //     return {idImg: img}
-  //   })
-  //   ctx.status = 200
-  //   ctx.body = {
-  //     msg: '图片添加成功',
-  //     data: imgs
-  //   }
-}
-
 async function deleteImg(ctx, next) {
-  let {idImg, imgUrl} = ctx.request.body
-  let p = path.resolve(__dirname, '../imgs/user', ctx.session.imgDir, imgUrl)
+  let {idImg} = ctx.request.body
+  let {imgUrl} = (await imgsModel.getImgById(idImg))[0]
+  let p = path.join(__dirname, '../imgs/user', ctx.session.imgDir, imgUrl)
 
-  fs.unlink(p, (err) => {
-    if(err) {
-      ctx.throw(500, '文件删除失败')
-    }
-  })
+  try {
+    fs.accessSync(p)
+  }catch(err) {
+    ctx.throw(400, '文件不存在')
+  }
+
+  try {
+    fs.unlinkSync(p)
+  } catch(err) {
+    ctx.throw(500, '文件删除失败')
+  }
 
   await imgsModel.deleteImgById(idImg)
 
@@ -137,7 +93,11 @@ async function deleteImg(ctx, next) {
 }
 async function deleteAlbum(ctx, next) {
   let {idAlbum} = ctx.request.body, {imgDir} = ctx.session
-  await albumMdl.deleteAlbum(idAlbum)
+  let {affectedRows} = await albumMdl.deleteAlbum(idAlbum)
+  if(affectedRows !== 1) {
+    ctx.throw(400, '相册不存在')
+  }
+
   let imgs = await imgsModel.getImgs(idAlbum, 1)
   let basicDir = path.resolve(__dirname, '../imgs/user', imgDir)
   for(let img of imgs) {
@@ -173,9 +133,31 @@ async function getAlbums(ctx, next){
 }
 
 async function updateImg(ctx, next) {
-  await saveImgs(ctx, true)(ctx, async () => {
+
+  let saveOpt = {
+    fields: [
+      {
+        name: 'imgs',
+        maxCount:5
+      }
+    ],
+    limits: {
+      fileSize: 1000000
+    },
+    cover: true,
+    dir: path.join(__dirname, '../imgs/user', ctx.session.imgDir)
+  }
+
+  await SaveFile(saveOpt)(ctx, async () => {
     let {imgs} = ctx.req.files
-    let {idimg} = ctx.req.body
+    let {idImg} = ctx.req.body
+    let result = await imgsModel.getImgById(idImg)
+    if(result.length === 0) {
+      ctx.throw(400, '图片不存在')
+    }
+    let p = path.resolve(__dirname, '../imgs/user', ctx.session.imgDir, result[0].imgUrl)
+    fs.unlinkSync(p)
+
     console.error('没做图片个数限制')
     for(let img of imgs) {
       await imgsModel.updateImg(idImg, {
@@ -193,10 +175,11 @@ async function updateImg(ctx, next) {
 
 
 router.post('/album/create', create)
-router.post('/album/addImg', addImg, afterAddImg)
+router.post('/album/addImg', addImg)
 router.delete('/album/', deleteAlbum)
 router.delete('/album/img', deleteImg)
 router.get('/album', getAlbums)
 router.put('/album/img', updateImg)
 
 module.exports = router
+
