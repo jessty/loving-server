@@ -130,7 +130,7 @@ async function updateImg(ctx, next) {
 
 
 router.post('/mood', publishMood)
-router.post('/mood/like', likeMood)
+// router.post('/mood/like', likeMood)
 router.delete('/mood/', deleteMood)
 // router.delete('/album/img', deleteImg)
 router.get('/mood', getMoods)
