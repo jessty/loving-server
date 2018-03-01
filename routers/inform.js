@@ -1,5 +1,15 @@
 const router = require('koa-router')()
 const informModel = require('../lib/informModel')
+
+async function search(ctx, next) {
+  let body = ctx.request.body
+  let result = await informModel.search(body);
+  ctx.status = 200
+  ctx.body = {
+    msg: '查询成功',
+    data: result
+  }
+}
 async function getInform(ctx, next) {
   let {idUser} = ctx.query
   let result = await informModel.getInform(ctx.params.table, idUser)
@@ -49,7 +59,7 @@ async function checkAccess(ctx, next) {
     return
   }
 }
-
+router.post('/inform/search', search)
 router.get('/inform/:table', getInform)
 router.post('/inform/:table',checkAccess, modifyInform)
 

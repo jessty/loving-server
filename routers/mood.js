@@ -100,35 +100,6 @@ async function getMoods(ctx, next){
 
 }
 
-async function updateImg(ctx, next) {
-
-  await saveImgs(ctx, true)(ctx, async () => {
-    let {imgs} = ctx.req.files
-    let {idImg} = ctx.req.body
-    let result = await imgsModel.getImgById(idImg)
-    if(result.length === 0) {
-      ctx.throw(400, '图片不存在')
-    }
-    let p = path.resolve(__dirname, '../imgs/user', ctx.session.imgDir, result[0].imgUrl)
-    fs.unlinkSync(p)
-
-    console.error('没做图片个数限制')
-    for(let img of imgs) {
-      await imgsModel.updateImg(idImg, {
-        imgUrl: img.filename
-      })
-    }
-
-    ctx.status = 200
-    ctx.body = {
-      msg: '图片更改成功'
-    }
-  })
-}
-
-
-
-
 router.post('/mood', publishMood)
 // router.post('/mood/like', likeMood)
 router.delete('/mood/', deleteMood)
