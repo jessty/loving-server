@@ -1,8 +1,8 @@
-const router = require('koa-router')()
+const Router = require('koa-router')
 const path = require('path')
 const fs = require('fs')
 const SaveFile = require('../util/saveFile')
-const {checkLogin} = require('../util/check')
+const check = require('../util/check')
 const RandomStr = require('../util/randomStr')
 const userModel = require('../lib/userModel')
 const imgsModel = require('../lib/imgsModel')
@@ -10,7 +10,7 @@ const albumMdl = require('../lib/albumModel')
 
 async function create(ctx, next){
   let body = ctx.request.body
-
+  body.idUser = ctx.session.idUser
   let {insertId} = await albumMdl.addAlbum(body)
 
   ctx.status = 200
@@ -69,7 +69,7 @@ async function addImg(ctx, next){
 
 async function deleteImg(ctx, next) {
   let {idImg} = ctx.request.body
-  let {imgUrl} = (await imgsModel.getImgById(idImg))[0]
+  let {'0': {imgUrl}} = await imgsModel.getImgById(idImg)
   let p = path.join(__dirname, '../imgs/user', ctx.session.imgDir, imgUrl)
 
   try {
@@ -91,6 +91,7 @@ async function deleteImg(ctx, next) {
     msg:'图片删除成功'
   }
 }
+
 async function deleteAlbum(ctx, next) {
   let {idAlbum} = ctx.request.body, {imgDir} = ctx.session
   let {affectedRows} = await albumMdl.deleteAlbum(idAlbum)
@@ -110,9 +111,13 @@ async function deleteAlbum(ctx, next) {
     msg: '相册删除成功'
   }
 }
+
 async function getAlbums(ctx, next){
   let {idUser} = ctx.query;
   let userInforms = await userModel.findUserById(idUser)
+  if(userInforms.length !== 1) {
+    ctx.throw(400, '用户不存在')
+  }
   let {imgDir} = userInforms[0]
   let albums = await albumMdl.getAlbums(idUser)
   let result = []
@@ -172,14 +177,17 @@ async function updateImg(ctx, next) {
   })
 }
 
+const router = new Router({
+  prefix: '/album'
+})
 
+router.post('/create', check.login, create)
+router.post('/img', check.login, addImg)
+router.delete('/', check.login, deleteAlbum)
+router.delete('/img', check.login, deleteImg)
+router.get('/all',check.authen, getAlbums)
+router.put('/img', check.login, updateImg)
 
-router.post('/album/create', create)
-router.post('/album/addImg', addImg)
-router.delete('/album/', deleteAlbum)
-router.delete('/album/img', deleteImg)
-router.get('/album', getAlbums)
-router.put('/album/img', updateImg)
 
 module.exports = router
 

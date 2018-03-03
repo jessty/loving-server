@@ -2,7 +2,7 @@ const router = require('koa-router')()
 const path = require('path')
 const fs = require('fs')
 const SaveFile = require('../util/saveFile')
-const {checkLogin} = require('../util/check')
+const check = require('../util/check')
 const RandomStr = require('../util/randomStr')
 const userModel = require('../lib/userModel')
 const imgsModel = require('../lib/imgsModel')
@@ -25,6 +25,7 @@ async function publishMood(ctx, next){
   await SaveFile(saveOpt)(ctx, async ()=> {
     let {imgs} = ctx.req.files
     let body = ctx.req.body
+    body.idUSer = ctx.session.idUser
     console.error('没做图片个数限制')
     let {insertId:idMood} = await moodMdl.addMood(body)
     let idImgs = []
@@ -100,11 +101,8 @@ async function getMoods(ctx, next){
 
 }
 
-router.post('/mood', publishMood)
-// router.post('/mood/like', likeMood)
-router.delete('/mood/', deleteMood)
-// router.delete('/album/img', deleteImg)
-router.get('/mood', getMoods)
-// router.put('/album/img', updateImg)
+router.post('/mood', check.login, publishMood)
+router.delete('/mood', check.login, deleteMood)
+router.get('/mood', check.authen, getMoods)
 
 module.exports = router

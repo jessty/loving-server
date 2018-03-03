@@ -1,6 +1,6 @@
 const router = require('koa-router')()
 const Upload = require('../util/upload')
-const {checkLogin} = require('../util/check')
+const check = require('../util/check')
 const RandomStr = require('../util/randomStr')
 const path = require('path')
 const fs = require('fs')
@@ -9,12 +9,6 @@ const userModel = require('../lib/userModel')
 
 
 async function idenIDCard(ctx, next) {
-  // checkLogin() ? null : ctx.throw(401, '用户未登录')
-  let result = await idenModel.checkIdenRec(ctx.session.idUser, 0)
-
-  if(result.length == 1) {
-    await idenModel.updateIdenRec(result[0].idIden, {idenStatus: 1})
-  }
 
   let uploadOpt = {
     destination:(req, file, cb) => {
@@ -49,28 +43,35 @@ async function idenIDCard(ctx, next) {
       } else {
         let err = new Error('参数错误')
         err.status = 400
-        throw err
+        cb(err,'')
       }
 
     },
     limits: {
-      fileSize: 10000
+      fileSize: 1000000
     },
     fields: [
-      { name: 'img',maxCount:5},
+      { name: 'front',maxCount:1},
+      { name: 'back',maxCount:1},
     ]
   } 
 
   await Upload(uploadOpt)(ctx, next)
 
-  await next()
   
 }
 async function afterIdenIDCard(ctx, next) {
+  let {idUser} = ctx.session
+  let result = await idenModel.checkIdenRec(idUser, 0)
+
+  if(result.length == 1) {
+    await idenModel.updateIdenRec(result[0].idIden, {idenStatus: 1})
+  }
+
   let {front, back} = ctx.req.files
 
   await idenModel.addIdenRec({
-    idUser: ctx.session.idUser,
+    idUser,
     frontUrl: front[0].filename,
     backUrl: back[0].filename,
     idenTime: new Date(),
@@ -99,15 +100,15 @@ async function getIdenIDCard(ctx, next) {
     }
   }
 }
-function abc(){
+function email(){
 
 }
 
-async function getMyMood(ctx, next){
+function phone(){
 
 }
 
-router.post('/myMood', idenIDCard, afterIdenIDCard)
-router.get('/myMood', getMyMood)
+router.post('/identify', check.login, idenIDCard, afterIdenIDCard)
+router.get('/identify', check.login, getIdenIDCard)
 
 module.exports = router

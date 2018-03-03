@@ -52,6 +52,7 @@ function response(ctx, result, otherData) {
 
   ctx.session.idUser = idUser
   ctx.session.imgDir = imgDir
+  ctx.session.rank = rank
   // ctx.cookies.set('koa:sess',{path:'http://localhost:3000/hello'})
   // ctx.cookies.set('koa:sess.sig',{path:'http://localhost:3000/hello'})
   ctx.status = 200 
