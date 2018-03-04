@@ -76,7 +76,7 @@ async function readEmail(ctx, next) {
 
   let emails = [email]
   while(email.emlFollowing != null) {
-    email = (await emailMdl.getDetail(type, email.emlFollowing, idUser))[0]
+    email = await emailMdl.getDetail(type, email.emlFollowing)
     emails.push(email)
   }
 

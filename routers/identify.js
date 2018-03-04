@@ -69,12 +69,13 @@ async function afterIdenIDCard(ctx, next) {
   }
 
   let {front, back} = ctx.req.files
+  let {idenTime} = ctx.req.body
 
   await idenModel.addIdenRec({
     idUser,
     frontUrl: front[0].filename,
     backUrl: back[0].filename,
-    idenTime: new Date(),
+    idenTime
   })
 
   ctx.status = 200
@@ -109,6 +110,7 @@ function phone(){
 }
 
 router.post('/identify', check.login, idenIDCard, afterIdenIDCard)
+// router.post('/identify', idenIDCard, afterIdenIDCard)
 router.get('/identify', check.login, getIdenIDCard)
 
 module.exports = router

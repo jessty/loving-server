@@ -18,7 +18,7 @@ initDB()
 
 const app = new Koa()
 
-// app.use(cors())
+app.use(cors())
 app.use(errorHandle())
 
 app.keys = ['forever','loving']
@@ -33,12 +33,7 @@ const sessionMysqlConfig = {
 }
 
 app.use(session({
-  // maxAge: 1*60*60*1000,
-  // httpOnly: false,
-  // path: '/',
-  // domain: 'http://localhost:3000/'
-  // renew: true
-  // store: new MysqlStore(sessionMysqlConfig)
+  maxAge: 1*60*60*1000,
 }, app))
 
 app.use(staticCache(
