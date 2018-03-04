@@ -7,6 +7,7 @@ const RandomStr = require('../util/randomStr')
 const userModel = require('../lib/userModel')
 const imgsModel = require('../lib/imgsModel')
 const moodMdl = require('../lib/moodModel')
+const likeMdl = require('../lib/likesModel')
 
 async function publishMood(ctx, next){
   let saveOpt = {
@@ -89,6 +90,13 @@ async function getMoods(ctx, next){
     let imgs = await imgsModel.getImgs(mood.idMood, 2)
     result.push(Object.assign(mood, {imgs}))
   }
+  // 获取心情的like状态
+  let likeStates = await Promise.all(result.map(mood => likeMdl.getLikeState(ctx.session.idUser, mood.idMood, 2)))
+
+  result.forEach((item, i) => {
+    result[i].idLike = likeStates[i][0].idLike
+    result[i].likeNum = likeStates[i][0].likeNum || 0
+  });
 
   ctx.status = 200
   ctx.body = {
@@ -101,7 +109,11 @@ async function getMoods(ctx, next){
 
 }
 
+async function likeMood(ctx, next) {
+  
+}
 router.post('/mood', check.login, publishMood)
+router.post('/mood/like', check.login, likeMood)
 router.delete('/mood', check.login, deleteMood)
 router.get('/mood', check.authen, getMoods)
 

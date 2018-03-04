@@ -1,7 +1,7 @@
 const Router = require('koa-router')
 const informModel = require('../lib/informModel')
 const idenModel = require('../lib/idenModel')
-const likeMdl = require('../lib/likeModel')
+const likeMdl = require('../lib/likesModel')
 const check = require('../util/check')
 
 const Tables = [
